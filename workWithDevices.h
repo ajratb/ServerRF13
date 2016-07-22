@@ -11,6 +11,7 @@
 #include <QtSql>
 #include <QSqlQuery>
 #include <QDateTime>
+#include <QSettings>
 
 //class QTcpServer;
 

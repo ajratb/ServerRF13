@@ -8,11 +8,48 @@ workWithDevices::workWithDevices(QObject *parent) : QObject(parent)
 
 
 bool workWithDevices::initDBconnection(){
+    QSettings *settings = new QSettings("settings.ini",QSettings::IniFormat);
+    QTextStream in_s(stdin);
+    QTextStream out_s(stdout, QIODevice::WriteOnly);
+
+    if(settings->value("Database_Settings/hostName").toString()==""){
+        out_s << "Enter hostName:"<< "\t";
+        out_s.flush();
+        QString hostName = in_s.readLine();
+        settings->setValue("Database_Settings/hostName", hostName);
+        settings->sync();
+    }
+
+    if(settings->value("Database_Settings/databaseName").toString()==""){
+        out_s << "Enter databaseName:"<< "\t";
+        out_s.flush();
+        QString databaseName = in_s.readLine();
+        settings->setValue("Database_Settings/databaseName", databaseName);
+        settings->sync();
+    }
+
+    if(settings->value("Database_Settings/userName").toString()==""){
+        out_s << "Enter userName:"<< "\t";
+        out_s.flush();
+        QString userName = in_s.readLine();
+        settings->setValue("Database_Settings/userName", userName);
+        settings->sync();
+    }
+
+    if(settings->value("Database_Settings/password").toString()==""){
+        out_s << "Enter password:"<< "\t";
+        out_s.flush();
+        QString password = in_s.readLine();
+        settings->setValue("Database_Settings/password", password);
+        settings->sync();
+    }
+
+
     db = QSqlDatabase::addDatabase("QPSQL");
-    db.setHostName("localhost");
-    db.setDatabaseName("mydb");
-    db.setUserName("test_user");
-    db.setPassword("qwerty");
+    db.setHostName(settings->value("Database_Settings/hostName").toString());
+    db.setDatabaseName(settings->value("Database_Settings/databaseName").toString());
+    db.setUserName(settings->value("Database_Settings/userName").toString());
+    db.setPassword(settings->value("Database_Settings/password").toString());
     if(!db.open()) {
         qWarning() << __FUNCTION__ << db.lastError().text();
         return 0;
