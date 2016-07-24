@@ -21,10 +21,12 @@ class workWithDevices : public QObject
 public:
     explicit workWithDevices(QObject *parent = 0);
     bool initDBconnection();
-    void initDevices(); // Рассылает мултикаст INIT
     void startListeningData();
 signals:
     // void readfromclientOK(QByteArray data);
+
+public slots:
+    void initDevices(); // Рассылает мултикаст INIT
 
 private slots:
     void newConnection();
@@ -40,6 +42,7 @@ private:
     QUdpSocket *udpServer;
     QTcpServer *tcpServer;
     int serverStatus;
+    QTimer *initTimer;
     QMap <int,QTcpSocket *> socketClients;
     QSqlDatabase db;
 

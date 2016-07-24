@@ -54,6 +54,12 @@ bool workWithDevices::initDBconnection(){
         qWarning() << __FUNCTION__ << db.lastError().text();
         return 0;
     }
+
+    initTimer = new QTimer(this);
+    connect (initTimer, SIGNAL(timeout()), this, SLOT(initDevices()));
+    initTimer->start(10*60*1000);
+    initDevices();
+    startListeningData();
     return 1;
 }
 
