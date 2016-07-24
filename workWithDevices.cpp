@@ -149,11 +149,12 @@ void workWithDevices::startListeningData(){
     tcpServer = new QTcpServer(this);
     connect(tcpServer, SIGNAL(newConnection()), this, SLOT(newConnection()));
     if(!tcpServer->listen(QHostAddress::Any, 7364) && serverStatus==0){
-        qDebug() << QString::fromUtf8("Server does not started :(");
+        qDebug() << QString::fromUtf8("Сервер не запущен: ") + tcpServer->errorString();
     }
     else
     {
-        qDebug() << "Server started!";
+        qDebug() << QString::fromUtf8("Сервер запущен: ") + tcpServer->serverAddress().toString()
+                            + QString::fromUtf8(":") + QString::number(tcpServer->serverPort());
         serverStatus=1;
     }
 }
