@@ -105,8 +105,15 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
     }
     else{
         QTextStream os(clientSocket);
-        qDebug() << "TbI BTuPaEIIIb MHE KAKYJUTO DICH! o_O";
-        os << "TbI BTuPaEIIIb MHE KAKYJUTO DICH! o_O";
+        qDebug() << QString::fromUtf8("Неизвестная строка");
+        os << "<html>\n"
+              "\t<head>\n"
+              "\t<meta charset='utf-8'>\n"
+              "\t</head>\n"
+              "\t<body>\n"
+               <<QString::fromUtf8("Здесь не на что смотреть.")<<
+              "\n\t</body>\n"
+              "</html>";
         return;
     }
 }
