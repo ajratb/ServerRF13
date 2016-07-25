@@ -70,10 +70,10 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
     // S-Уникальный номер устройства
     // T-Температура *С
     // H-Влажность %
-    // LOCKER - посоны
-    // ФОРМАТ: LOCKER,UPD - отослать девайсу активные ключи
-    // ФОРМАТ: LOCKER,INSIDE,1234567890 - записать UID вошедшего в БДшечку
-    // ФОРМАТ: LOCKER,NEW,1234567890- отослать девайсу активные ключи
+    // GATE - посоны
+    // ФОРМАТ: GATE,UPD - отослать девайсу активные ключи
+    // ФОРМАТ: GATE,INSIDE,1234567890 - записать UID вошедшего в БДшечку
+    // ФОРМАТ: GATE,NEW,1234567890- отослать девайсу активные ключи
 
     qDebug() << toParse;
     QStringList toParseSplitted = toParse.split(',');
@@ -84,7 +84,7 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
         this->insertInDB(toParseSplitted, toParseSplitted[0]);
         return;
     }
-    else if(toParseSplitted[0].startsWith("LOCKER")){
+    else if(toParseSplitted[0].startsWith("GATE")){
         if(toParseSplitted[1].startsWith("UPD"))
         {
             // отправка ключей в EEPROM
@@ -121,19 +121,22 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
 void workWithDevices::insertInDB(QStringList toInsert, QString type){
     QSqlQuery query;
     if(type=="METEO"){
-        query.prepare("INSERT INTO "+toInsert[0]+toInsert[1]+"(temperature, humidity, datetime) VALUES (:temperature, :humidity, :datetime);");
+        query.prepare("INSERT INTO "+toInsert[0]+toInsert[1]+"(temperature, humidity, datetime)"
+                                                             " VALUES (:temperature, :humidity, :datetime);");
         query.bindValue(":temperature", toInsert[2]);
         query.bindValue(":humidity", toInsert[3]);
         query.bindValue(":datetime", "now()");
-    }else if(type=="LOCKER"){
+    }else if(type=="GATE"){
         if(toInsert[1]=="NEW")
         {
-            query.prepare("INSERT INTO locker_users(uid) VALUES (:uid);");
+            query.prepare("INSERT INTO gate_keys(uid, insert_datetime) VALUES (:uid,:datetime);");
             query.bindValue(":uid", toInsert[2]);
+            query.bindValue(":datetime","now()");
         }
         else if(toInsert[1]=="INSIDE")
         {
-            query.prepare("INSERT INTO locker_journal(uid, datetime) VALUES (:uid, :datetime);");
+            query.prepare("insert into gate_journal(name, datetime)"
+                          "VALUES ((SELECT name from gate_keys where uid=:uid),:datetime);");
             query.bindValue(":uid", toInsert[2]);
             query.bindValue(":datetime", "now()");
         }
@@ -188,10 +191,10 @@ void workWithDevices::sendUIDs(QTcpSocket* clientSocket){
     QTextStream os(clientSocket);
     os.setAutoDetectUnicode(true);
     QSqlQuery query;
-    query.exec("SELECT id, UID FROM locker_users WHERE active=1");
+    query.exec("SELECT id, UID FROM gate_keys WHERE isactive=true");
     while (query.next()) {
         //int id = query.value(0).toInt();
-        u_int8_t UID = query.value(1).toUInt();
+        QString UID = query.value(1).toString();
         // qDebug() << id << UIDdec;
         os << UID << "\n";
     }
