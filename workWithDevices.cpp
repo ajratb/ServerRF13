@@ -88,7 +88,7 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
         if(toParseSplitted[1].startsWith("UPD"))
         {
             // отправка ключей в EEPROM
-            this->sendUIDs(clientSocket);
+            this->sendMasterUIDs(clientSocket);
             return;
         }
         else if(toParseSplitted[1].startsWith("NEW"))
@@ -187,11 +187,11 @@ void workWithDevices::readFromClient(){
     socketClients.remove(clientSocketID);
 }
 
-void workWithDevices::sendUIDs(QTcpSocket* clientSocket){
+void workWithDevices::sendMasterUIDs(QTcpSocket* clientSocket){
     QTextStream os(clientSocket);
     os.setAutoDetectUnicode(true);
     QSqlQuery query;
-    query.exec("SELECT id, UID FROM gate_keys WHERE isactive=true");
+    query.exec("SELECT UID FROM gate_keys WHERE ismaster=true and isactive=true");
     while (query.next()) {
         //int id = query.value(0).toInt();
         QString UID = query.value(1).toString();

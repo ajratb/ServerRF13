@@ -37,7 +37,8 @@ private slots:
 private:
     void insertInDB(QStringList toInsert, QString type);
     void parseData(QString toParse, QTcpSocket* clientSocket);
-    void sendUIDs(QTcpSocket* clientSocket);
+    void sendMasterUIDs(QTcpSocket* clientSocket);
+    void INSIDE(QTcpSocket* clientSocket, QString uid);
 
     QUdpSocket *udpServer;
     QTcpServer *tcpServer;
