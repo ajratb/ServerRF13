@@ -99,7 +99,8 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
         }
         else if(toParseSplitted[1].startsWith("INSIDE")){
             // запись вошедшего
-            this->insertInDB(toParseSplitted, toParseSplitted[0]);
+            // this->insertInDB(toParseSplitted, toParseSplitted[0]);
+            this->INSIDE(clientSocket, toParseSplitted[2]);
             return;
         }
     }
@@ -199,6 +200,61 @@ void workWithDevices::sendMasterUIDs(QTcpSocket* clientSocket){
         os << UID << "\n";
     }
 
+}
+
+void workWithDevices::INSIDE(QTcpSocket* clientSocket, QString uid){
+    QTextStream os(clientSocket);
+    os.setAutoDetectUnicode(true);
+    QSqlQuery query;
+    query.prepare("SELECT start_of_allowedtime, stop_of_allowedtime, isactive FROM gate_keys WHERE uid=:uid;");
+    query.bindValue(":uid",uid);
+    query.exec();
+    if (query.next()){
+        // Если ключ есть в базе
+        QTime start_of_allowedtime = query.value(0).toTime();
+        QTime stop_of_allowedtime = query.value(1).toTime();
+        bool isactive = query.value(2).toBool();
+        QTime currentTime = QTime::currentTime();
+        if (isactive == true){
+            if ((currentTime >= start_of_allowedtime)
+                    && (currentTime <= stop_of_allowedtime)){
+                // ключ активный, в это время разрешено открывать
+                os << "GATE,INSIDE,ALLOW\n";
+                query.prepare("INSERT INTO gate_journal(name, comment, datetime)"
+                              "VALUES ((SELECT name from gate_keys where uid=:uid), 'Вошёл', :datetime);");
+                query.bindValue(":uid", uid.toUInt());
+                query.bindValue(":datetime", "now()");
+                qDebug() << "Ключ: " << uid << "\t Вошёл.";
+            }else{
+                // ключ активный, в это время запрещено открывать
+                os << "GATE,INSIDE,DENIED\n";
+                query.prepare("INSERT INTO gate_journal(name, comment, datetime)"
+                              "VALUES ((SELECT name from gate_keys where uid=:uid), 'Пытался зайти в не своё время', :datetime);");
+                query.bindValue(":uid", uid.toUInt());
+                query.bindValue(":datetime", "now()");
+                qDebug() << "Ключ: " << uid << "\t в это время вход запрещен.";
+            }
+        } else {
+            // ключ не активирован
+            os << "GATE,INSIDE,DENIED\n";
+            query.prepare("INSERT INTO gate_journal(name, comment, datetime)"
+                          "VALUES ((SELECT name from gate_keys where uid=:uid), 'Ключ не активирован', :datetime);");
+            query.bindValue(":uid", uid.toUInt());
+            query.bindValue(":datetime", "now()");
+            qDebug() << "Ключ: " << uid << "\t не активирован.";
+        }
+    } else {
+        // Если ключа нет в базе
+        os << "GATE,INSIDE,DENIED\n";
+        query.prepare("INSERT INTO gate_journal(comment, datetime)"
+                      "VALUES ('Неизвестный ключ', :datetime);");
+        query.bindValue(":datetime", "now()");
+        qDebug() << "Неизвестный ключ:" << uid;
+    }
+
+    if(!query.exec()){
+        qWarning() << __FUNCTION__ << query.lastError().text();
+    }
 }
 
 void workWithDevices::stopListeningData(){
