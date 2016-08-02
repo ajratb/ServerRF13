@@ -192,14 +192,17 @@ void workWithDevices::sendMasterUIDs(QTcpSocket* clientSocket){
     QTextStream os(clientSocket);
     os.setAutoDetectUnicode(true);
     QSqlQuery query;
-    query.exec("SELECT UID FROM gate_keys WHERE ismaster=true and isactive=true");
-    while (query.next()) {
-        //int id = query.value(0).toInt();
-        QString UID = query.value(1).toString();
-        // qDebug() << id << UIDdec;
-        os << UID << "\n";
+    query.prepare("SELECT uid FROM gate_keys WHERE isactive=true AND ismaster=true;");
+    if(!query.exec()){
+        qWarning() << __FUNCTION__ << query.lastError().text();
     }
-
+    while (query.next()) {
+        QString UID = query.value(0).toString()+"\n";
+        qDebug() << UID;
+        os << UID;
+    }
+        qDebug() << "<END>\n";
+        os << "<END>\n";
 }
 
 void workWithDevices::INSIDE(QTcpSocket* clientSocket, QString uid){
