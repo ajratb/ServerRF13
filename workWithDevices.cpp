@@ -181,7 +181,7 @@ void workWithDevices::readFromClient(){
     QTcpSocket* clientSocket = (QTcpSocket*)sender();
     int clientSocketID = clientSocket->socketDescriptor();
 
-    while(clientSocket->waitForReadyRead());
+    while(clientSocket->waitForReadyRead(1000));
     QByteArray volosa = clientSocket->readAll();
     this->parseData(volosa, clientSocket);
     clientSocket->close();
