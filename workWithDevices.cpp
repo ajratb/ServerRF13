@@ -57,7 +57,7 @@ bool workWithDevices::initDBconnection(){
 
     initTimer = new QTimer(this);
     connect (initTimer, SIGNAL(timeout()), this, SLOT(initDevices()));
-    initTimer->start(10*60*1000);
+    initTimer->start(60*1000/6);
     initDevices();
     startListeningData();
     return 1;
@@ -67,9 +67,10 @@ bool workWithDevices::initDBconnection(){
 void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
     // Формат: METEO,S0001,T-20.15,H100
     // METEO - тип устройства, Может быть RFID - эт для посонов
-    // S-Уникальный номер устройства
+    // N-Уникальный номер устройства
     // T-Температура *С
     // H-Влажность %
+    // S-серийник датчика
     // GATE - посоны
     // ФОРМАТ: GATE,UPD - отослать девайсу активные ключи
     // ФОРМАТ: GATE,INSIDE,1234567890 - записать UID вошедшего в БДшечку
@@ -80,7 +81,7 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
 
     if(toParseSplitted[0].startsWith("METEO")){
 
-        toParseSplitted.replaceInStrings(QRegExp("^(S|T|H)"), "");
+        toParseSplitted.replaceInStrings(QRegExp("^(S|T|H|N)"), "");
         this->insertInDB(toParseSplitted, toParseSplitted[0]);
         return;
     }
@@ -110,9 +111,11 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
         os << "<html>\n"
               "\t<head>\n"
               "\t<meta charset='utf-8'>\n"
+            //  "<meta http-equiv='refresh' content='1;URL=http://vk.com/id76812964' />"
               "\t</head>\n"
               "\t<body>\n"
-               <<QString::fromUtf8("Здесь не на что смотреть.")<<
+              "<center><iframe width='560' height='315' src='https://www.youtube.com/embed/riVbff20K0I' frameborder='0' allowfullscreen></iframe></center>"
+            //   <<QString::fromUtf8("Здесь не на что смотреть.")<<
               "\n\t</body>\n"
               "</html>";
         return;
@@ -122,11 +125,43 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
 void workWithDevices::insertInDB(QStringList toInsert, QString type){
     QSqlQuery query;
     if(type=="METEO"){
-        query.prepare("INSERT INTO "+toInsert[0]+toInsert[1]+"(temperature, humidity, datetime)"
-                                                             " VALUES (:temperature, :humidity, :datetime);");
-        query.bindValue(":temperature", toInsert[2]);
-        query.bindValue(":humidity", toInsert[3]);
-        query.bindValue(":datetime", "now()");
+        int i=2;
+        do{
+         // Нумерация с 0, начинаем с 2 элемента, т.к. в 0 и 1 заведомо нет нужных данных
+            QString Serial = toInsert[i++];
+            query.prepare("SELECT id FROM meteo_sensors WHERE serial_number=:serial;");
+            query.bindValue(":serial", Serial);
+            if(!query.exec()){
+                qWarning() << __FUNCTION__ << query.lastError().text();
+            }
+            if (!query.next()){
+                query.prepare("INSERT INTO meteo_sensors(serial_number) VALUES (:serial);");
+                query.bindValue(":serial", Serial);
+                if(!query.exec()){
+                    qWarning() << __FUNCTION__ << query.lastError().text();
+                }
+            }
+            if (Serial.toInt() == 256){ // DHT
+                query.prepare("INSERT INTO "+toInsert[0]+toInsert[1]+"(temperature, humidity, serial_id, datetime)"
+                                                                     " VALUES (:temperature, :humidity, "
+                                                                     "(SELECT id from meteo_sensors where serial_number=:serial),"
+                                                                     " :datetime);");
+                query.bindValue(":serial", Serial);
+                query.bindValue(":temperature", toInsert[i++]);
+                query.bindValue(":humidity", toInsert[i++]);
+                query.bindValue(":datetime", "now()");
+            } else {            // DS18b20
+                query.prepare("INSERT INTO "+toInsert[0]+toInsert[1]+"(temperature, serial_id, datetime)"
+                                                                     " VALUES (:temperature, "
+                                                                     "(SELECT id from meteo_sensors where serial_number=:serial), "
+                                                                     ":datetime);");
+                query.bindValue(":serial", Serial);
+                query.bindValue(":temperature", toInsert[i++]);
+                query.bindValue(":datetime", "now()");
+            }
+            query.exec();
+        } while (i != toInsert.count());
+        return;
     }else if(type=="GATE"){
         if(toInsert[1]=="NEW")
         {
