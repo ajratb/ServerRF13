@@ -7,7 +7,7 @@ workWithDevices::workWithDevices(QObject *parent) : QObject(parent)
 }
 
 
-bool workWithDevices::initDBconnection(){
+void workWithDevices::initDBconnection(){
     QSettings *settings = new QSettings("settings.ini",QSettings::IniFormat);
     QTextStream in_s(stdin);
     QTextStream out_s(stdout, QIODevice::WriteOnly);
@@ -52,15 +52,13 @@ bool workWithDevices::initDBconnection(){
     db.setPassword(settings->value("Database_Settings/password").toString());
     if(!db.open()) {
         qWarning() << __FUNCTION__ << db.lastError().text();
-        return 0;
-    }
-
+    } else {
     initTimer = new QTimer(this);
     connect (initTimer, SIGNAL(timeout()), this, SLOT(initDevices()));
     initTimer->start(60*1000/6);
     initDevices();
     startListeningData();
-    return 1;
+    }
 }
 
 
