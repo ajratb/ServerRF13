@@ -16,32 +16,32 @@ void workWithDevices::initDBconnection(){
         out_s << "Enter hostName:"<< "\t";
         out_s.flush();
         QString hostName = in_s.readLine();
-        settings->setValue("Database_Settings/hostName", hostName);
-        settings->sync();
+        settings.setValue("Database_Settings/hostName", hostName);
+        settings.sync();
     }
 
     if(settings.value("Database_Settings/databaseName").toString()==""){
         out_s << "Enter databaseName:"<< "\t";
         out_s.flush();
         QString databaseName = in_s.readLine();
-        settings->setValue("Database_Settings/databaseName", databaseName);
-        settings->sync();
+        settings.setValue("Database_Settings/databaseName", databaseName);
+        settings.sync();
     }
 
     if(settings.value("Database_Settings/userName").toString()==""){
         out_s << "Enter userName:"<< "\t";
         out_s.flush();
         QString userName = in_s.readLine();
-        settings->setValue("Database_Settings/userName", userName);
-        settings->sync();
+        settings.setValue("Database_Settings/userName", userName);
+        settings.sync();
     }
 
     if(settings.value("Database_Settings/password").toString()==""){
         out_s << "Enter password:"<< "\t";
         out_s.flush();
         QString password = in_s.readLine();
-        settings->setValue("Database_Settings/password", password);
-        settings->sync();
+        settings.setValue("Database_Settings/password", password);
+        settings.sync();
     }
 
 
