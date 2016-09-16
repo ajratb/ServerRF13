@@ -7,7 +7,6 @@
 #include <QTcpServer>
 #include <QUdpSocket>
 #include <QDebug>
-#include <QMap>
 #include <QtSql>
 #include <QSqlQuery>
 #include <QDateTime>
@@ -20,10 +19,9 @@ class workWithDevices : public QObject
     Q_OBJECT
 public:
     explicit workWithDevices(QObject *parent = 0);
-    bool initDBconnection();
+    void initDBconnection();
     void startListeningData();
 signals:
-    // void readfromclientOK(QByteArray data);
 
 public slots:
     void initDevices(); // Рассылает мултикаст INIT
@@ -31,20 +29,18 @@ public slots:
 private slots:
     void newConnection();
     void readFromClient();
-    void stopListeningData();
 
 
 private:
-    void insertInDB(QStringList toInsert, QString type);
     void parseData(QString toParse, QTcpSocket* clientSocket);
+    void writeMeteoMeasurements(QStringList toInsert);
     void sendMasterUIDs(QTcpSocket* clientSocket);
     void INSIDE(QTcpSocket* clientSocket, QString uid);
+    void writeNewKey(QString newKey);
 
     QUdpSocket *udpServer;
     QTcpServer *tcpServer;
-    int serverStatus;
     QTimer *initTimer;
-    QMap <int,QTcpSocket *> socketClients;
     QSqlDatabase db;
 
 };

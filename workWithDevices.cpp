@@ -3,9 +3,7 @@
 
 workWithDevices::workWithDevices(QObject *parent) : QObject(parent)
 {
-    serverStatus=0;
 }
-
 
 void workWithDevices::initDBconnection(){
     QSettings settings("settings.ini",QSettings::IniFormat);
@@ -171,34 +169,36 @@ void workWithDevices::initDevices(){
 
 void workWithDevices::startListeningData(){
     tcpServer = new QTcpServer(this);
-    connect(tcpServer, SIGNAL(newConnection()), this, SLOT(newConnection()));
-    if(!tcpServer->listen(QHostAddress::Any, 7364) && serverStatus==0){
+    if(!tcpServer->listen(QHostAddress::Any, 7364)){
         qDebug() << QString::fromUtf8("Сервер не запущен: ") + tcpServer->errorString();
     }
     else
     {
         qDebug() << QString::fromUtf8("Сервер запущен: ") + tcpServer->serverAddress().toString()
-                            + QString::fromUtf8(":") + QString::number(tcpServer->serverPort());
-        serverStatus=1;
+                    + QString::fromUtf8(":") + QString::number(tcpServer->serverPort());
+        connect(tcpServer, SIGNAL(newConnection()), this, SLOT(newConnection()));
     }
 }
 
 void workWithDevices::newConnection(){
-    QTcpSocket* clientSocket = tcpServer->nextPendingConnection();
-    int clientSocketID = clientSocket->socketDescriptor();
-    socketClients[clientSocketID]=clientSocket;
-    connect(socketClients[clientSocketID], SIGNAL(readyRead()), this, SLOT(readFromClient()));
+    QTcpSocket *clientSocket;
+    while (tcpServer->hasPendingConnections()) {
+        clientSocket = tcpServer->nextPendingConnection();
+        clientSocket->setSocketOption(QAbstractSocket::KeepAliveOption,true);
+        qintptr clientSocketID = clientSocket->socketDescriptor();
+        connect(clientSocket, SIGNAL(readyRead()), this, SLOT(readFromClient()));
+        qDebug() << QTime::currentTime().toString()
+                 << "clientSocketID:"<<clientSocketID;
+    }
 }
 
 void workWithDevices::readFromClient(){
     QTcpSocket* clientSocket = (QTcpSocket*)sender();
-    int clientSocketID = clientSocket->socketDescriptor();
-
-    while(clientSocket->waitForReadyRead(1000));
-    QByteArray volosa = clientSocket->readAll();
-    this->parseData(volosa, clientSocket);
+    QByteArray incomingString = clientSocket->readAll();
+    parseData(incomingString, clientSocket);
     clientSocket->close();
-    socketClients.remove(clientSocketID);
+    qDebug()   << "clientSocketID:"<<clientSocket->socketDescriptor();
+    qDebug() << "========";
 }
 
 void workWithDevices::sendMasterUIDs(QTcpSocket* clientSocket){
@@ -270,18 +270,6 @@ void workWithDevices::INSIDE(QTcpSocket* clientSocket, QString uid){
 
     if(!query.exec()){
         qWarning() << __FUNCTION__ << query.lastError().text();
-    }
-}
-
-void workWithDevices::stopListeningData(){
-    if(serverStatus==1){
-        foreach(int i, socketClients.keys()){
-            socketClients[i]->close();
-            socketClients.remove(i);
-        }
-        tcpServer->close();
-        serverStatus=0;
-        qDebug() << QString::fromUtf8("Сервер остановлен!");
     }
 }
 
