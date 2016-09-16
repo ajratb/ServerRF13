@@ -187,6 +187,7 @@ void workWithDevices::initDevices(){
 
     udpServer->writeDatagram(datagram.data(), datagram.size(),
                              QHostAddress::Broadcast, 45454);
+    udpServer->close();
 }
 
 void workWithDevices::startListeningData(){
