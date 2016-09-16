@@ -8,11 +8,11 @@ workWithDevices::workWithDevices(QObject *parent) : QObject(parent)
 
 
 void workWithDevices::initDBconnection(){
-    QSettings *settings = new QSettings("settings.ini",QSettings::IniFormat);
+    QSettings settings("settings.ini",QSettings::IniFormat);
     QTextStream in_s(stdin);
     QTextStream out_s(stdout, QIODevice::WriteOnly);
 
-    if(settings->value("Database_Settings/hostName").toString()==""){
+    if(settings.value("Database_Settings/hostName").toString()==""){
         out_s << "Enter hostName:"<< "\t";
         out_s.flush();
         QString hostName = in_s.readLine();
@@ -20,7 +20,7 @@ void workWithDevices::initDBconnection(){
         settings->sync();
     }
 
-    if(settings->value("Database_Settings/databaseName").toString()==""){
+    if(settings.value("Database_Settings/databaseName").toString()==""){
         out_s << "Enter databaseName:"<< "\t";
         out_s.flush();
         QString databaseName = in_s.readLine();
@@ -28,7 +28,7 @@ void workWithDevices::initDBconnection(){
         settings->sync();
     }
 
-    if(settings->value("Database_Settings/userName").toString()==""){
+    if(settings.value("Database_Settings/userName").toString()==""){
         out_s << "Enter userName:"<< "\t";
         out_s.flush();
         QString userName = in_s.readLine();
@@ -36,7 +36,7 @@ void workWithDevices::initDBconnection(){
         settings->sync();
     }
 
-    if(settings->value("Database_Settings/password").toString()==""){
+    if(settings.value("Database_Settings/password").toString()==""){
         out_s << "Enter password:"<< "\t";
         out_s.flush();
         QString password = in_s.readLine();
@@ -46,10 +46,10 @@ void workWithDevices::initDBconnection(){
 
 
     db = QSqlDatabase::addDatabase("QPSQL");
-    db.setHostName(settings->value("Database_Settings/hostName").toString());
-    db.setDatabaseName(settings->value("Database_Settings/databaseName").toString());
-    db.setUserName(settings->value("Database_Settings/userName").toString());
-    db.setPassword(settings->value("Database_Settings/password").toString());
+    db.setHostName(settings.value("Database_Settings/hostName").toString());
+    db.setDatabaseName(settings.value("Database_Settings/databaseName").toString());
+    db.setUserName(settings.value("Database_Settings/userName").toString());
+    db.setPassword(settings.value("Database_Settings/password").toString());
     if(!db.open()) {
         qWarning() << __FUNCTION__ << db.lastError().text();
     } else {
