@@ -80,7 +80,7 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
     if(toParseSplitted[0].startsWith("METEO")){
 
         toParseSplitted.replaceInStrings(QRegExp("^(S|T|H|N)"), "");
-        this->insertInDB(toParseSplitted, toParseSplitted[0]);
+        this->writeMeteoMeasurements(toParseSplitted);
         return;
     }
     else if(toParseSplitted[0].startsWith("GATE")){
@@ -93,7 +93,7 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
         else if(toParseSplitted[1].startsWith("NEW"))
         {
             // запись нового ключа
-            this->insertInDB(toParseSplitted, toParseSplitted[0]);
+            this->writeNewKey(toParseSplitted[2]);
             return;
         }
         else if(toParseSplitted[1].startsWith("INSIDE")){
@@ -120,9 +120,8 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
     }
 }
 
-void workWithDevices::insertInDB(QStringList toInsert, QString type){
+void workWithDevices::writeMeteoMeasurements(QStringList toInsert){
     QSqlQuery query;
-    if(type=="METEO"){
         int i=2;
         do{
          // Нумерация с 0, начинаем с 2 элемента, т.к. в 0 и 1 заведомо нет нужных данных
@@ -159,26 +158,6 @@ void workWithDevices::insertInDB(QStringList toInsert, QString type){
             }
             query.exec();
         } while (i != toInsert.count());
-        return;
-    }else if(type=="GATE"){
-        if(toInsert[1]=="NEW")
-        {
-            query.prepare("INSERT INTO gate_keys(uid, insert_datetime) VALUES (:uid,:datetime);");
-            query.bindValue(":uid", toInsert[2]);
-            query.bindValue(":datetime","now()");
-        }
-        else if(toInsert[1]=="INSIDE")
-        {
-            query.prepare("insert into gate_journal(name, datetime)"
-                          "VALUES ((SELECT name from gate_keys where uid=:uid),:datetime);");
-            query.bindValue(":uid", toInsert[2]);
-            query.bindValue(":datetime", "now()");
-        }
-    }
-
-    if(!query.exec()){
-        qWarning() << __FUNCTION__ << query.lastError().text();
-    }
 }
 
 void workWithDevices::initDevices(){
@@ -306,3 +285,12 @@ void workWithDevices::stopListeningData(){
     }
 }
 
+void workWithDevices::writeNewKey(QString newKey){
+    QSqlQuery query;
+    query.prepare("INSERT INTO gate_keys(uid, insert_datetime) VALUES (:uid,:datetime);");
+    query.bindValue(":uid", newKey);
+    query.bindValue(":datetime","now()");
+    if(!query.exec()){
+        qWarning() << __FUNCTION__ << query.lastError().text();
+    }
+}
