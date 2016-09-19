@@ -72,11 +72,11 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
     // ФОРМАТ: GATE,INSIDE,1234567890 - записать UID вошедшего в БДшечку
     // ФОРМАТ: GATE,NEW,1234567890- отослать девайсу активные ключи
 
-    qDebug() << toParse;
+
     QStringList toParseSplitted = toParse.split(',');
 
     if(toParseSplitted[0].startsWith("METEO")){
-
+        qDebug() << toParse;
         toParseSplitted.replaceInStrings(QRegExp("^(S|T|H|N)"), "");
         this->writeMeteoMeasurements(toParseSplitted);
         return;
@@ -170,10 +170,10 @@ void workWithDevices::newConnection(){
     while (tcpServer->hasPendingConnections()) {
         clientSocket = tcpServer->nextPendingConnection();
         clientSocket->setSocketOption(QAbstractSocket::KeepAliveOption,true);
-        qintptr clientSocketID = clientSocket->socketDescriptor();
+       // qintptr clientSocketID = clientSocket->socketDescriptor();
         connect(clientSocket, SIGNAL(readyRead()), this, SLOT(readFromClient()));
-        qDebug() << QTime::currentTime().toString()
-                 << "clientSocketID:"<<clientSocketID;
+       // qDebug() << QTime::currentTime().toString()
+       //          << "clientSocketID:"<<clientSocketID;
     }
 }
 
@@ -182,8 +182,8 @@ void workWithDevices::readFromClient(){
     QByteArray incomingString = clientSocket->readAll();
     parseData(incomingString, clientSocket);
     clientSocket->close();
-    qDebug()   << "clientSocketID:"<<clientSocket->socketDescriptor();
-    qDebug() << "========";
+    //qDebug()   << "clientSocketID:"<<clientSocket->socketDescriptor();
+    //qDebug() << "========";
 }
 
 void workWithDevices::sendMasterUIDs(QTcpSocket* clientSocket){
