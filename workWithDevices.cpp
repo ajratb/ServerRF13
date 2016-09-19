@@ -207,7 +207,7 @@ void workWithDevices::INSIDE(QTcpSocket* clientSocket, QString uid){
     QTextStream os(clientSocket);
     os.setAutoDetectUnicode(true);
     QSqlQuery query;
-    query.prepare("SELECT start_of_allowedtime, stop_of_allowedtime, isactive FROM gate_keys WHERE uid=:uid;");
+    query.prepare("SELECT start_of_allowedtime, stop_of_allowedtime, isactive, ismaster FROM gate_keys WHERE uid=:uid;");
     query.bindValue(":uid",uid);
     query.exec();
     if (query.next()){
@@ -215,10 +215,11 @@ void workWithDevices::INSIDE(QTcpSocket* clientSocket, QString uid){
         QTime start_of_allowedtime = query.value(0).toTime();
         QTime stop_of_allowedtime = query.value(1).toTime();
         bool isactive = query.value(2).toBool();
+        bool ismaster = query.value(3).toBool();
         QTime currentTime = QTime::currentTime();
         if (isactive == true){
-            if ((currentTime >= start_of_allowedtime)
-                    && (currentTime <= stop_of_allowedtime)){
+            if (((currentTime >= start_of_allowedtime)
+                    && (currentTime <= stop_of_allowedtime)) || ismaster == true){
                 // ключ активный, в это время разрешено открывать
                 os << "GATE,INSIDE,ALLOW\n";
                 query.prepare("INSERT INTO gate_journal(name, comment, datetime)"
