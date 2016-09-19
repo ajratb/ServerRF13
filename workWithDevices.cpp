@@ -101,21 +101,6 @@ void workWithDevices::parseData(QString toParse, QTcpSocket* clientSocket){
             return;
         }
     }
-    else{
-        QTextStream os(clientSocket);
-        qDebug() << QString::fromUtf8("Неизвестная строка");
-        os << "<html>\n"
-              "\t<head>\n"
-              "\t<meta charset='utf-8'>\n"
-            //  "<meta http-equiv='refresh' content='1;URL=http://vk.com/id76812964' />"
-              "\t</head>\n"
-              "\t<body>\n"
-              "<center><iframe width='560' height='315' src='https://www.youtube.com/embed/riVbff20K0I' frameborder='0' allowfullscreen></iframe></center>"
-            //   <<QString::fromUtf8("Здесь не на что смотреть.")<<
-              "\n\t</body>\n"
-              "</html>";
-        return;
-    }
 }
 
 void workWithDevices::writeMeteoMeasurements(QStringList toInsert){
