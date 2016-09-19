@@ -260,6 +260,16 @@ void workWithDevices::INSIDE(QTcpSocket* clientSocket, QString uid){
 
 void workWithDevices::writeNewKey(QString newKey){
     QSqlQuery query;
+    query.prepare("SELECT id FROM gate_keys WHERE uid=:newKey;");
+    query.bindValue(":newKey", newKey);
+    if(!query.exec()){
+        qWarning() << __FUNCTION__ << query.lastError().text();
+    }
+    if (query.next()){
+    qDebug() << "Ключ уже записан!" << newKey;
+    return;
+    }
+
     query.prepare("INSERT INTO gate_keys(uid, insert_datetime) VALUES (:uid,:datetime);");
     query.bindValue(":uid", newKey);
     query.bindValue(":datetime","now()");
@@ -267,5 +277,5 @@ void workWithDevices::writeNewKey(QString newKey){
         qWarning() << __FUNCTION__ << query.lastError().text();
     }
     qDebug() << QString::fromUtf8("Записан новый ключ:") << newKey;
-      }
+
 }
