@@ -225,7 +225,7 @@ void workWithDevices::INSIDE(QTcpSocket* clientSocket, QString uid){
                               "VALUES ((SELECT name from gate_keys where uid=:uid), 'Вошёл', :datetime);");
                 query.bindValue(":uid", uid.toUInt());
                 query.bindValue(":datetime", "now()");
-                qDebug() << "Ключ: " << uid << "\t Вошёл.";
+                qDebug() << QString::fromUtf8("Ключ: ") << uid << QString::fromUtf8("\t Вошёл.");
             }else{
                 // ключ активный, в это время запрещено открывать
                 os << "GATE,INSIDE,DENIED\n";
@@ -233,7 +233,7 @@ void workWithDevices::INSIDE(QTcpSocket* clientSocket, QString uid){
                               "VALUES ((SELECT name from gate_keys where uid=:uid), 'Пытался зайти в не своё время', :datetime);");
                 query.bindValue(":uid", uid.toUInt());
                 query.bindValue(":datetime", "now()");
-                qDebug() << "Ключ: " << uid << "\t в это время вход запрещен.";
+                qDebug() << QString::fromUtf8("Ключ: ") << uid << QString::fromUtf8("\t в это время вход запрещен.");
             }
         } else {
             // ключ не активирован
@@ -242,7 +242,7 @@ void workWithDevices::INSIDE(QTcpSocket* clientSocket, QString uid){
                           "VALUES ((SELECT name from gate_keys where uid=:uid), 'Ключ не активирован', :datetime);");
             query.bindValue(":uid", uid.toUInt());
             query.bindValue(":datetime", "now()");
-            qDebug() << "Ключ: " << uid << "\t не активирован.";
+            qDebug() << QString::fromUtf8("Ключ: ") << uid << QString::fromUtf8("\t не активирован.");
         }
     } else {
         // Если ключа нет в базе
@@ -250,7 +250,7 @@ void workWithDevices::INSIDE(QTcpSocket* clientSocket, QString uid){
         query.prepare("INSERT INTO gate_journal(comment, datetime)"
                       "VALUES ('Неизвестный ключ', :datetime);");
         query.bindValue(":datetime", "now()");
-        qDebug() << "Неизвестный ключ:" << uid;
+        qDebug() << QString::fromUtf8("Неизвестный ключ:") << uid;
     }
 
     if(!query.exec()){
@@ -266,4 +266,6 @@ void workWithDevices::writeNewKey(QString newKey){
     if(!query.exec()){
         qWarning() << __FUNCTION__ << query.lastError().text();
     }
+    qDebug() << QString::fromUtf8("Записан новый ключ:") << newKey;
+      }
 }
